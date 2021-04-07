@@ -194,35 +194,53 @@ end
 --[[4/4/2021 movedget whether or not it is a cadwell quest
 return true if it is a cadwell quest
 ]]--
-local function check_map_state()
-    internal.dm("Debug", "LQD Checking map state")
-    if lib.last_mapid and (GetCurrentMapId() ~= lib.last_mapid) then
-        internal.dm("Debug", "changed")
-        internal.dm("Debug", GetCurrentMapId())
+function lib.check_map_state()
+    internal.dm("Debug", "[7] LQD Checking map state")
+    if not lib.last_mapid and lib.current_mapid then
+        internal.dm("Debug", "[7] last_mapid and current_mapid not assigned")
+        return
+    end
+
+    if lib.current_mapid ~= lib.last_mapid then
+        internal.dm("Debug", "[7] last_mapid was different")
+        local temp = string.format("[7] Last Mapid: %s", lib.last_mapid) or "[7] NA"
+        internal.dm("Debug", temp)
+        local temp = string.format("[7] Current Mapid: %s", lib.current_mapid) or "[7] NA"
+        internal.dm("Debug", temp)
         if GetMapType() > MAPTYPE_ZONE then
-            internal.dm("Debug", "stopped")
+            internal.dm("Debug", "[7] MAPTYPE_ZONE reached")
             return
         end
+        internal.dm("Debug", "[7] Get zone and update zone data")
         local zone = LMP:GetZoneAndSubzone(true, false, true)
-        internal.dm("Debug", "Refresh QuestsPins")
         lib.zone_quests = lib:get_quest_list(zone)
     else
-        internal.dm("Debug", "Did not change or not assigned")
+      internal.dm("Debug", "[7] Map unchanged")
     end
-    lib.last_mapid = GetCurrentMapId()
 end
 
 CALLBACK_MANAGER:RegisterCallback("OnWorldMapChanged", function()
-    check_map_state()
+    internal.dm("Debug", "[2] OnWorldMapChanged")
+    lib.on_map_zone_changed()
 end)
 
 WORLD_MAP_SCENE:RegisterCallback("StateChange", function(oldState, newState)
+    internal.dm("Debug", "[3] StateChange")
     if newState == SCENE_SHOWING then
-        check_map_state()
-    elseif newState == SCENE_HIDDEN then
-        check_map_state()
+        internal.dm("Debug", "[3] SCENE_SHOWING")
+        lib.on_map_zone_changed()
+    end
+    if newState == SCENE_HIDDEN then
+        internal.dm("Debug", "[3] SCENE_HIDDEN")
+        lib.on_map_zone_changed()
     end
 end)
+
+
+local function on_prepare_for_jump(eventCode, zoneName, zoneDescription, loadingTexture, instanceDisplayType)
+  internal.dm("Debug", "[4] EVENT_PREPARE_FOR_JUMP")
+end
+EVENT_MANAGER:RegisterForEvent(lib.libName .. "_prepare_for_jump", EVENT_PREPARE_FOR_JUMP, on_prepare_for_jump)
 
 --[[ get whether or not it is a cadwell quest
 return true if it is a cadwell quest
@@ -336,8 +354,9 @@ function lib:get_quest_giver(id, lang)
 end
 
 function lib:get_quest_name(id, lang)
+  local unknown = lib.unknown_quest_name_string[lib.effective_lang]
   lang = lang or lib.effective_lang
-  return lib.quest_names[lib.effective_lang][id] or "Unknown Name"
+  return lib.quest_names[lib.effective_lang][id] or unknown
 end
 
 -------------------------------------------------
@@ -663,7 +682,13 @@ local function update_quest_information()
     if #data == 6 then
       current_data = data
     end
+<<<<<<< HEAD
     if not lib.quest_data[index] then
+=======
+
+    if not lib.quest_data[index] then
+      if rebuilt_data[index] == nil then rebuilt_data[index] = {} end
+>>>>>>> upstream/master
       rebuilt_data[index] = current_data
     else
       if current_data[lib.quest_data_index.game_api] > lib.quest_data[index][lib.quest_data_index.game_api] then
@@ -757,7 +782,10 @@ local function update_quest_information()
           end
         end
       end
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
       if in_range_missing then
         --internal.dm("Debug", "[Save] Flagged as in_range_missing")
         count_added = count_added + 1
@@ -766,14 +794,20 @@ local function update_quest_information()
         table.insert(current_data[zone], the_quest_from_save)
         added = true
       end
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
       if in_range_good_data then
         --internal.dm("Debug", "[Stash] Flagged as in_range_good_data")
         if strored_data[zone] == nil then strored_data[zone] = {} end
         table.insert(strored_data[zone], the_quest_from_save)
         count_stashed = count_stashed + 1
       end
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
       if in_range_missing_giver then
         --internal.dm("Debug", "[Save] Flagged as in_range_missing_giver")
         count_added = count_added + 1
@@ -782,7 +816,10 @@ local function update_quest_information()
         table.insert(current_data[zone], the_quest_from_save)
         added = true
       end
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
       if quest_not_found then
         --internal.dm("Debug", "[Save] Quest may not be in database, flagged as quest_not_found")
         count_added = count_added + 1
@@ -791,7 +828,10 @@ local function update_quest_information()
         table.insert(current_data[zone], the_quest_from_save)
         added = true
       end
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
     end
   end
   if added then
@@ -805,7 +845,7 @@ local function update_quest_information()
 end
 
 local function OnPlayerActivatedQuestBuild(eventCode)
-  internal.dm("Debug", "OnPlayerActivatedQuestBuild")
+  --internal.dm("Debug", "OnPlayerActivatedQuestBuild")
   build_completed_quests()
   update_started_quests()
   update_quest_information()
@@ -817,9 +857,6 @@ EVENT_MANAGER:RegisterForEvent(lib.libName .. "_BuildQuests", EVENT_PLAYER_ACTIV
 -- Event handler function for EVENT_ADD_ON_LOADED
 local function OnLoad(eventCode, addOnName)
   if addOnName ~= lib.libName then return end
-
-  internal.dm("Debug", "LQD Checking Map State")
-  check_map_state()
 
   if LibQuestData_SavedVariables.version ~= 4 then
     -- d("ding not 4")
